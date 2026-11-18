@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=VideoLab
+Comment=Local video layout studio (Wails development mode)
+Exec=/ABSOLUTE/PATH/TO/videolab/start.sh
+Path=/ABSOLUTE/PATH/TO/videolab
+Terminal=true
+Categories=AudioVideo;Video;Development;
+StartupNotify=true

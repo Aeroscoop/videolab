@@ -41,3 +41,14 @@ go test -tags webkit2_41 ./...
 5. Phase 5: Go MCP service with shared project model and validation.
 
 Repo: https://github.com/Aeroscoop/videolab
+
+## Next desktop session / local installation
+
+**Start with [Cowork handoff](docs/OVERDRACHT-COWORK-2026-11-18.md)** for the exact state of PR #1 and the Linux Mint tasks.
+
+- [Linux startup and updates](docs/STARTEN-LINUX.md)
+- [Desktop launcher template](scripts/videolab.desktop.example)
+- [Manual testing checklist](docs/TESTPLAN.md)
+- [Technical decisions](docs/BESLUITEN.md)
+
+The `start.sh` launcher is stable and fetches `origin/main` only on a clean local `main`. Until phase 1 PR #1 is merged, it **will not download phase 1** on `main`: test the PR branch first. The launcher runs `wails dev`, which requires a development toolchain, not an installed production binary.
