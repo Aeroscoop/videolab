@@ -1,0 +1,9 @@
+build/bin/
+frontend/wailsjs/
+node_modules/
+*.mp4
+*.mov
+*.webm
+*.mkv
+*.videolab-media
+.DS_Store
