@@ -1,7 +1,8 @@
 import {defaults,validate,timecode,clipLabel} from "./project.js";
 const $=id=>document.getElementById(id);
 let project=defaults(),url=null;
-const video=$("video"), stage=$("stage");
+let video=$("video");
+const stage=$("stage"), videoLayer=$("video-layer");
 const fields=["format","background","scale","x","y"];
 function notify(text){$("status").textContent=text}
 function render(){
@@ -18,9 +19,21 @@ function render(){
  $("clip").classList.toggle("empty",!project.media);
  $("duration").textContent=timecode(video.duration);
 }
+function resetMedia(){
+ const previous=video;
+ previous.pause();
+ previous.removeAttribute("src");
+ previous.load();
+ video=previous.cloneNode(false);
+ video.style.display="none";
+ previous.replaceWith(video);
+ URL.revokeObjectURL(url);
+ url=null;
+ $("play").textContent="▶";
+}
 function setMedia(file){
  if(!file||!file.type.startsWith("video/")){notify("Kies een videobestand");return}
- if(url)URL.revokeObjectURL(url);
+ if(url)resetMedia();
  url=URL.createObjectURL(file);
  video.src=url;video.style.display="block";$("placeholder").hidden=true;
  project.media={name:file.name,size:file.size,type:file.type};
@@ -29,21 +42,27 @@ function setMedia(file){
  render();
 }
 $("import").addEventListener("click",()=>$("file").click());
-$("file").addEventListener("change",e=>setMedia(e.target.files[0]));
+$("file").addEventListener("change",e=>{
+ const input=e.currentTarget;
+ const file=input.files[0];
+ input.value="";
+ setMedia(file);
+});
 for(const key of fields)$(key).addEventListener("input",e=>{project[key]=["scale","x","y"].includes(key)?Number(e.target.value):e.target.value;render()});
 $("safe-toggle").addEventListener("change",e=>{project.safe=e.target.checked;render()});
 $("reset").addEventListener("click",()=>{project.scale=80;project.x=0;project.y=0;render()});
 $("play").addEventListener("click",()=>{if(!url)return;if(video.paused)video.play().catch(()=>notify("Video kan niet worden afgespeeld"));else video.pause()});
-video.addEventListener("play",()=>$("play").textContent="Ⅱ");
-video.addEventListener("pause",()=>$("play").textContent="▶");
-video.addEventListener("loadedmetadata",()=>{render();updateClock()});
-video.addEventListener("error",()=>notify("Videoformaat niet ondersteund in deze WebView"));
+videoLayer.addEventListener("play",()=>$("play").textContent="Ⅱ",true);
+videoLayer.addEventListener("pause",()=>$("play").textContent="▶",true);
+videoLayer.addEventListener("loadedmetadata",()=>{render();updateClock()},true);
+videoLayer.addEventListener("error",()=>notify("Videoformaat niet ondersteund in deze WebView"),true);
 function updateClock(){
  const duration=Number.isFinite(video.duration)?video.duration:0;
- $("clock").textContent=timecode(video.currentTime)+" / "+timecode(duration);
- $("scrubber").value=duration?(video.currentTime/duration)*100:0;
+ const currentTime=duration?video.currentTime:0;
+ $("clock").textContent=timecode(currentTime)+" / "+timecode(duration);
+ $("scrubber").value=duration?(currentTime/duration)*100:0;
 }
-video.addEventListener("timeupdate",updateClock);
+videoLayer.addEventListener("timeupdate",updateClock,true);
 $("scrubber").addEventListener("input",e=>{if(Number.isFinite(video.duration))video.currentTime=Number(e.target.value)/100*video.duration});
 for(const [id,delta] of [["back",-5],["forward",5]])$(id).addEventListener("click",()=>{if(Number.isFinite(video.duration))video.currentTime=Math.max(0,Math.min(video.duration,video.currentTime+delta))});
 $("save").addEventListener("click",()=>{
@@ -54,7 +73,15 @@ $("save").addEventListener("click",()=>{
 $("load").addEventListener("click",()=>$("project-file").click());
 $("project-file").addEventListener("change",async e=>{
  const file=e.target.files[0];if(!file)return;
- try{const p=validate(JSON.parse(await file.text()));project=p;if(url){URL.revokeObjectURL(url);url=null};video.pause();video.removeAttribute("src");video.load();video.style.display="none";$("placeholder").hidden=false;$("scrubber").disabled=true;render();notify(p.media?"Project geopend — importeer "+p.media.name+" opnieuw":"Project geopend");}
+ try{
+  project=validate(JSON.parse(await file.text()));
+  if(url)resetMedia();
+  $("placeholder").hidden=false;
+  $("scrubber").disabled=true;
+  render();
+  updateClock();
+  notify(project.media?"Project geopend — importeer "+project.media.name+" opnieuw":"Project geopend");
+ }
  catch(err){notify(err.message)}
  e.target.value="";
 });
