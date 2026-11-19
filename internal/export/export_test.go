@@ -241,3 +241,79 @@ func TestMissingInputLeavesNoOutput(t *testing.T) {
 		t.Fatal("uitvoer bestaat")
 	}
 }
+
+func TestTrimKeepsOnlySelectedRange(t *testing.T) {
+	need(t)
+	dir := t.TempDir()
+	src := filepath.Join(dir, "source.mp4")
+	out := filepath.Join(dir, "trimmed.mp4")
+	source := exec.Command("ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=red:s=128x160:r=30:d=1",
+		"-f", "lavfi", "-i", "color=blue:s=128x160:r=30:d=1",
+		"-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000:d=2",
+		"-filter_complex", "[0:v][1:v]concat=n=2:v=1:a=0[v]",
+		"-map", "[v]", "-map", "2:a", "-c:v", "libx264", "-c:a", "aac", src)
+	if output, err := source.CombinedOutput(); err != nil {
+		t.Fatalf("testbron maken: %v %s", err, output)
+	}
+
+	end := 1.7
+	settings := Options{Input: src, Output: out, Format: "4:5", Background: "#a9c9b6",
+		Scale: 100, TrimStart: 1.1, TrimEnd: &end}
+	if _, err := Export(context.Background(), settings); err != nil {
+		t.Fatal(err)
+	}
+	p := probe(t, out)
+	if p.Video != "h264" || p.Audio != "aac" || math.Abs(p.Duration-0.6) > 0.05 {
+		t.Fatalf("onverwachte trim-uitvoer: %+v", p)
+	}
+	first := pixel(t, out, 540, 675)
+	if first[0] > 40 || first[2] < 180 {
+		t.Fatalf("eerste frame moet uit het blauwe deel na 1 s komen: %v", first)
+	}
+
+	end = 3
+	settings.Output = filepath.Join(dir, "out-of-range.mp4")
+	if _, err := Export(context.Background(), settings); err == nil {
+		t.Fatal("eindpunt voorbij de bron werd geaccepteerd")
+	}
+	if _, err := os.Stat(settings.Output); !os.IsNotExist(err) {
+		t.Fatalf("ongeldige trim mag geen uitvoer achterlaten: %v", err)
+	}
+}
+
+func TestTimelineSkipsMiddleAndChangesSpeed(t *testing.T) {
+	need(t)
+	dir := t.TempDir()
+	src := filepath.Join(dir, "source.mp4")
+	out := filepath.Join(dir, "timeline.mp4")
+	create := exec.Command("ffmpeg", "-v", "error",
+		"-f", "lavfi", "-i", "color=red:s=128x160:r=30:d=1",
+		"-f", "lavfi", "-i", "color=green:s=128x160:r=30:d=1",
+		"-f", "lavfi", "-i", "color=blue:s=128x160:r=30:d=1",
+		"-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000:d=3",
+		"-filter_complex", "[0:v][1:v][2:v]concat=n=3:v=1:a=0[v]",
+		"-map", "[v]", "-map", "3:a", "-c:v", "libx264", "-c:a", "aac", src)
+	if output, err := create.CombinedOutput(); err != nil {
+		t.Fatalf("testbron maken: %v %s", err, output)
+	}
+	o := Options{Input: src, Output: out, Format: "4:5", Background: "#a9c9b6", Scale: 100,
+		Clips: []Clip{{Start: 0, End: 1}, {Start: 2, End: 3}}, Speed: 2}
+	if _, err := Export(context.Background(), o); err != nil {
+		t.Fatal(err)
+	}
+	p := probe(t, out)
+	if p.Video != "h264" || p.Audio != "aac" || math.Abs(p.Duration-1) > 0.06 {
+		t.Fatalf("onverwachte montage-uitvoer: %+v", p)
+	}
+	assertColor := func(at string, channel int) {
+		t.Helper()
+		b, err := exec.Command("ffmpeg", "-v", "error", "-ss", at, "-i", out,
+			"-vf", "format=rgb24,crop=1:1:540:675", "-frames:v", "1",
+			"-f", "rawvideo", "-pix_fmt", "rgb24", "-").Output()
+		if err != nil || len(b) != 3 || b[channel] < 185 || b[1] > 40 {
+			t.Fatalf("verkeerd frame op %s: %v, %v", at, b, err)
+		}
+	}
+	assertColor("0.2", 0)
+	assertColor("0.8", 2)
+}

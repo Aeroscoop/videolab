@@ -1,9 +1,8 @@
 # Testplan — Linux Mint
 
-Status 2026-11-18: code in PR #1; tests en Wails-GUI zijn **nog niet lokaal uitgevoerd**.
+Gebruik een aparte checkout en een virtueel scherm wanneer de werkdesktop bezet is.
 
 ## Automated
-- `go mod tidy` indien go.sum nog ontbreekt
 - `npm test`
 - `go test -tags webkit2_41 ./...`
 
@@ -16,12 +15,14 @@ Status 2026-11-18: code in PR #1; tests en Wails-GUI zijn **nog niet lokaal uitg
 6. Schaal, verplaats horizontaal/verticaal, verander achtergrond en richtzones.
 7. Sla JSON op, laad het opnieuw en importeer de oorspronkelijke video opnieuw.
 8. Controleer dat `bash start.sh` de repo op featurebranch niet update en wél de app start.
-9. Maak/test desktopkoppeling volgens `docs/STARTEN-LINUX.md`.
-10. Controleer updategedrag pas na merge op een schone `main` met toestemming.
+9. Splits een bron in drie delen, verwijder het middelste deel en zet de snelheid op 2×. Bekijk de sprong in de preview, exporteer en controleer duur, kleuren en audio met FFmpeg. Maak de verwijdering ongedaan en controleer de tijdlijn.
+10. Selecteer verschillende platformrichtzones. Controleer de overgang naar het juiste canvas en vergelijk mobiel, tablet en desktop. Exporteer terwijl de richtzone zichtbaar is.
+11. Neem in een geïsoleerd Chrome-profiel een synthetisch tabblad op via de deelkeuze. Stop, download, importeer de WebM, scrub en exporteer.
+12. Start `videolab-mcp -root <testmap>` via stdio. Test toolinventaris, projectvalidatie, videoprobe, export, een bestaand doelbestand en een pad buiten de testmap.
 
 ## Bekende grenzen
-- Slechts één clip; tijdlijn is scrub/seek, geen echte montage.
-- Geen cliptrim, splitsen, herschikken, snelheidsregeling, audio-edit, export, browseropname of MCP.
-- Geen embedded media in JSON.
-- Codec, HTML file-input en bestandsdownload op WebKitGTK niet gegarandeerd.
-- Richtzones zijn illustratief, niet een garantie voor elk social-platform.
+
+- De tijdlijn maakt meerdere clips uit één bronbestand.
+- Het JSON-project bewaart het montageplan. Herimport van de video is nodig.
+- De browser en WebKitGTK bepalen welke codecs kunnen worden afgespeeld.
+- Platformrichtzones zijn ontwerphulpen. Controleer de echte plaatsing op het doelapparaat.

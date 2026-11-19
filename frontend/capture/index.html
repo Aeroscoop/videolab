@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VideoLab · Tabblad opnemen</title>
+<link rel="stylesheet" href="./capture.css">
+<script type="module" src="./capture.js"></script>
+</head>
+<body>
+<main>
+  <h1>Tabblad opnemen</h1>
+  <p>Kies in de browser welk tabblad je deelt. Sla de opname op en importeer het WebM-bestand in VideoLab.</p>
+  <div class="controls">
+    <button id="start">Kies tabblad</button>
+    <button id="stop" disabled>Stop opname</button>
+    <a id="download" hidden>Bewaar WebM</a>
+  </div>
+  <p id="status" role="status"></p>
+  <video id="preview" muted playsinline hidden></video>
+</main>
+</body>
+</html>
