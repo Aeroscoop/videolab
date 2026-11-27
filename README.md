@@ -1,11 +1,13 @@
 # VideoLab
 
-A small, reusable desktop video-layout studio built with Go and Wails v2. Phase 1 supports importing a local video, previewing and scrubbing it, selecting 4:5 / 9:16 / 16:9 / 1:1, moving/scaling the recording, visual safe-area guides, and saving/opening a JSON project.
+VideoLab is a desktop editor for turning one source video into a social-format MP4. It runs locally with Go, Wails and FFmpeg.
 
 ## Linux Mint requirements
 
 - Go compatible with Wails v2, Wails CLI v2
 - `libgtk-3-dev` and `libwebkit2gtk-4.1-dev`
+- `ffmpeg` and `ffprobe` on the app’s PATH for export and preparing browser recordings
+- Chrome or Chromium for tab recording
 - Node.js for tests
 
 After cloning and installing Wails, start in development mode:
@@ -23,32 +25,41 @@ npm test
 go test -tags webkit2_41 ./...
 ```
 
-## Phase 1 limitations
+## Editing and export
 
-- One local video clip on a simple scrub timeline; no split, trim or multi-track editing yet.
-- Browser file input, playback and downloads must be tested in Linux WebKitGTK. Codec support varies.
-- Projects are JSON layout metadata; imported media is **not embedded**. Reimport the original video when reopening a project.
-- Safe-area markings are approximate design guides, not verified Instagram/LinkedIn UI overlays.
-- No MP4 export, recording, FFmpeg integration or MCP server yet. Those are later phases.
-- A browser preview is not a reliable final-render guarantee.
+- Import a video. Use the canvas preset, background, scale and position to frame it.
+- Scrub to a source time and use **Begin hier**, **Einde hier** or **Splits hier**. Select a clip on the timeline to trim or remove it. Choose a playback speed for the whole edit. **Ongedaan maken** or Ctrl+Z restores the previous edit.
+- **MP4 exporteren** renders the kept clips in source order. Output uses H.264 and AAC when the source contains audio.
+- Saved projects are JSON. Reopen the project and reimport the same source video to restore the edit.
 
-## Project roadmap
+## Platform previews
 
-1. **Phase 1:** Wails shell, local video import, preview, scrub timeline, presets, positioning, project JSON.
-2. Phase 2: clips, trim/split, playback speed, undo and native FFmpeg export.
-3. Phase 3: platform previews with tested device-specific overlays.
-4. Phase 4: recording browser tabs via a supported capture workflow.
-5. Phase 5: Go MCP service with shared project model and validation.
+Choose **Platformrichtzone** to set the associated canvas and see the guide. The YouTube Ads profiles use Google's mobile, tablet and desktop illustrations. The TikTok Ads profile uses a conservative rectangle inside the standard LTR In-Feed template. The LinkedIn feed guide uses editorial margins based on the platform's edge guidance. Guides only affect the preview. Check the target placement on the actual device before publishing.
+
+Platform references are available from [Google Ads safe zones](https://support.google.com/google-ads/answer/13547298), [TikTok In-Feed ad templates](https://ads.tiktok.com/resources/help/article/tiktok-auction-in-feed-ads), [LinkedIn video guidance](https://www.linkedin.com/help/linkedin/answer/a7494039).
+
+## Record a browser tab
+
+Choose **Tabblad opnemen** in VideoLab. In Chrome or Chromium, select **Kies tabblad** and approve the specific tab in the browser dialog. Enable tab audio in that dialog when needed. Stop the recording, save the WebM and import it into VideoLab. On Linux, VideoLab prepares a temporary H.264/AAC copy for preview and editing. The recorder page runs on localhost and keeps the recording in the browser until downloaded.
+
+## MCP
+
+Build the local stdio server with Go.
+
+```sh
+go build -o /absolute/path/videolab-mcp ./cmd/videolab-mcp
+```
+
+Set the client's command to that executable and its arguments to `["-root", "/absolute/path/to/video-projects"]`. The server provides `validate_project`, `probe_video` and `export_mp4`. Tool paths are relative to the configured root. Export takes a saved project, a source and a new `.mp4` destination. It preserves existing files at the destination.
 
 Repo: https://github.com/Aeroscoop/videolab
 
 ## Next desktop session / local installation
 
-**Start with [Cowork handoff](docs/OVERDRACHT-COWORK-2026-11-18.md)** for the exact state of PR #1 and the Linux Mint tasks.
+The [original Cowork handoff](docs/OVERDRACHT-COWORK-2026-11-18.md) records the phase 1 setup.
 
-- [Linux startup and updates](docs/STARTEN-LINUX.md)
+- [Linux production build, startup and updates](docs/STARTEN-LINUX.md)
+- [Phase 5 handoff and verification](docs/OVERDRACHT-2026-11-19.md)
 - [Desktop launcher template](scripts/videolab.desktop.example)
 - [Manual testing checklist](docs/TESTPLAN.md)
 - [Technical decisions](docs/BESLUITEN.md)
-
-The `start.sh` launcher is stable and fetches `origin/main` only on a clean local `main`. Until phase 1 PR #1 is merged, it **will not download phase 1** on `main`: test the PR branch first. The launcher runs `wails dev`, which requires a development toolchain, not an installed production binary.

@@ -1,0 +1,11 @@
+:root{color-scheme:dark;font:16px system-ui,sans-serif;background:#111916;color:#e8efe9}
+body{margin:0;padding:clamp(20px,7vw,90px) 20px}
+main{max-width:780px;margin:auto}
+h1{font-size:clamp(24px,4vw,40px);margin:0 0 14px}
+p{color:#b5c9bc;line-height:1.55}
+.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:24px 0 16px}
+button,.controls a{font:inherit;border:1px solid #415148;border-radius:8px;padding:9px 14px;background:#26342d;color:#eff6f0;cursor:pointer}
+#start{background:#86ae94;color:#101c15;font-weight:700}
+button:disabled{opacity:.5;cursor:default}
+video{max-width:100%;max-height:65vh;border-radius:8px;background:#080e0b}
+[hidden]{display:none}
